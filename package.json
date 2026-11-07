@@ -1,7 +1,7 @@
 {
   "name": "fernando-notion",
   "productName": "Fernando Notion",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A Notion-style workspace for notes, projects, calendars and agendas. Everything auto-saves to your computer.",
   "author": "Fernando Notion",
   "license": "MIT",
@@ -38,11 +38,15 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         },
         {
           "target": "portable",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "icon": "build/icon.ico"
@@ -63,7 +67,10 @@
       "target": [
         {
           "target": "dmg",
-          "arch": ["arm64", "x64"]
+          "arch": [
+            "arm64",
+            "x64"
+          ]
         }
       ],
       "category": "public.app-category.productivity",
@@ -76,7 +83,9 @@
       "title": "Fernando Notion"
     },
     "linux": {
-      "target": ["AppImage"],
+      "target": [
+        "AppImage"
+      ],
       "category": "Office",
       "icon": "build/icon.png",
       "artifactName": "Fernando-Notion-${version}-linux-${arch}.${ext}"

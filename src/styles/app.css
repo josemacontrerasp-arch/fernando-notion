@@ -2567,7 +2567,7 @@ select {
 }
 
 /* ===================================================== peek ========== */
-.peek {
+.peek-panel {
   position: fixed;
   top: 0;
   right: 0;
@@ -3257,7 +3257,7 @@ kbd {
   }
   .sidebar,
   .topbar,
-  .peek,
+  .peek-panel,
   .toasts,
   .page-controls,
   .cover-actions,

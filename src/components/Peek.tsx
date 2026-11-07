@@ -1,6 +1,6 @@
 import { ChevronsRight, Ellipsis, Maximize2 } from "lucide-react";
 import { useEffect } from "react";
-import { openPage, openPeek, useApp } from "../lib/store";
+import { openPage, openPeek, peekOpenCount, useApp } from "../lib/store";
 import { pageTitle } from "../lib/utils";
 import { PageView } from "./PageView";
 import { PageIcon } from "./Sidebar";
@@ -23,13 +23,39 @@ export function Peek() {
     return () => window.removeEventListener("keydown", onKey);
   }, [peekId]);
 
+  // Clicking the page behind the panel closes it, like Notion. Clicks that open a row in
+  // the panel, close a menu, or drag/select something leave it open.
+  useEffect(() => {
+    if (!peekId) return;
+    let down: { x: number; y: number; layers: boolean; opens: number } | null = null;
+    const behind = (t: EventTarget | null) => !!(t as Element | null)?.closest?.(".main, .sidebar");
+    const onDown = (e: PointerEvent) => {
+      down = { x: e.clientX, y: e.clientY, layers: hasOpenLayers(), opens: peekOpenCount() };
+    };
+    const onClick = (e: MouseEvent) => {
+      const d = down;
+      down = null;
+      if (!d || d.layers || !behind(e.target)) return;
+      if (peekOpenCount() !== d.opens) return;
+      if (Math.abs(e.clientX - d.x) > 4 || Math.abs(e.clientY - d.y) > 4) return;
+      openPeek(null);
+    };
+    window.addEventListener("pointerdown", onDown, true);
+    window.addEventListener("click", onClick);
+    return () => {
+      window.removeEventListener("pointerdown", onDown, true);
+      window.removeEventListener("click", onClick);
+    };
+  }, [peekId]);
+
   useEffect(() => {
     if (peekId && !page) openPeek(null);
   }, [peekId, page]);
 
   if (!peekId || !page) return null;
   return (
-    <aside className="peek">
+    // Not "peek": PageView puts that class on the page inside, which would then get these panel styles.
+    <aside className="peek-panel">
       <div className="peek-bar">
         <button type="button" className="icon-btn" title="Close (Esc)" onClick={() => openPeek(null)}>
           <ChevronsRight size={18} />

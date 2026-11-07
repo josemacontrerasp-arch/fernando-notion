@@ -1,3 +1,10 @@
+### What's new
+
+- **Fixed:** opening a project (or any item from a board, table, timeline or calendar) showed a side panel that could not scroll and hid its close button. The panel now scrolls normally and its close button (**»**) is back in the top-left corner.
+- You can also close the panel by clicking anywhere outside it, or by pressing **Esc**.
+
+**Updating:** quit Fernando Notion (⌘Q on a Mac), download the file for your computer below and install it over the old app. On a Mac, drag it into Applications, choose **Replace**, and if macOS blocks it again, repeat the one-time **Open Anyway** step below. Your pages are not touched.
+
 ### Which file do I download?
 
 | Your computer | Download |

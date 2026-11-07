@@ -291,7 +291,13 @@ export function goForward() {
   set({ route: next, fwdStack: s.fwdStack.slice(1), backStack: [...s.backStack, s.route], meta: { ...s.meta, lastRoute: next } });
 }
 
-export const openPeek = (id: ID | null) => set({ peekId: id });
+let peekOpens = 0;
+/** Counts pages opened in the side panel, so a click can tell whether it opened one. */
+export const peekOpenCount = () => peekOpens;
+export const openPeek = (id: ID | null) => {
+  if (id) peekOpens++;
+  set({ peekId: id });
+};
 export const setQuickFind = (open: boolean) => set({ quickFind: open });
 
 export function setActiveView(dbId: ID, viewId: ID) {
