@@ -120,12 +120,13 @@ npm run dist:linux   # Linux AppImage
 To publish a new version, bump `version` in `package.json`, then push a tag:
 
 ```bash
-git tag v1.0.2
-git push origin v1.0.2
+git tag v1.0.3
+git push origin v1.0.3
 ```
 
 GitHub Actions (`.github/workflows/build.yml`) then builds the Windows, macOS and Linux installers,
-launches the Mac app on a real Mac to check it opens and saves, and publishes everything as a release.
+runs the desktop test (`tests/e2e.mjs`) on the packaged Mac and Windows apps, and publishes
+everything as a release only if all of it passed.
 Mac builds are ad-hoc signed (no paid Apple certificate), which is why macOS asks for “Open Anyway” on first launch.
 
 ## Development
@@ -134,6 +135,7 @@ Mac builds are ad-hoc signed (no paid Apple certificate), which is why macOS ask
 npm run dev       # Electron + hot reload
 npm run dev:web   # just the web UI at http://127.0.0.1:5173 (saves to the browser instead of files)
 npm run typecheck
+npm run test:e2e  # opens the desktop app and uses it: pages, side panel, saving, quitting
 ```
 
 Project layout:
@@ -142,6 +144,7 @@ Project layout:
 electron/        main process (window, file storage, backups, PDF export) + preload bridge
 src/lib/         data model, store, auto-save, database logic, templates, export
 src/components/  sidebar, pages, editor (BlockNote), databases (table/board/calendar/timeline/list/gallery), home, calendar
+tests/           desktop end-to-end test (Playwright), also run on every release
 ```
 
 Built with Electron, React, [BlockNote](https://www.blocknotejs.org) (MPL-2.0), [FullCalendar](https://fullcalendar.io) (MIT), Zustand, date-fns and Lucide icons.

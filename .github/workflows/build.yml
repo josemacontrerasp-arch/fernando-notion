@@ -1,8 +1,9 @@
 name: Build installers
 
-# Push a version tag (e.g. `git tag v1.0.2 && git push origin v1.0.2`) to build
-# Windows, macOS and Linux installers, smoke-test the Mac app, and publish them
-# as a GitHub Release. "Run workflow" in the Actions tab builds without publishing.
+# Push a version tag (e.g. `git tag v1.0.3 && git push origin v1.0.3`) to build
+# Windows, macOS and Linux installers, test the Mac and Windows apps with
+# tests/e2e.mjs, and publish them as a GitHub Release only if every build and test
+# passed. "Run workflow" in the Actions tab builds and tests without publishing.
 on:
   push:
     tags: ["v*"]
@@ -34,30 +35,31 @@ jobs:
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
 
-      - name: Smoke-test the Mac app (signature, launch, saving)
+      - name: Check the Mac app's signature
         if: runner.os == 'macOS'
         shell: bash
         run: |
           set -euo pipefail
           APP="$(ls -d release/mac-arm64/*.app | head -1)"
-          echo "Testing: $APP"
           codesign --verify --deep --strict --verbose=2 "$APP"
           codesign -dv "$APP" 2>&1 | grep -E "Identifier|Signature|Format" || true
-          export FN_DATA_DIR="$RUNNER_TEMP/fn-data" FN_USER_DATA="$RUNNER_TEMP/fn-user"
-          "$APP/Contents/MacOS/Fernando Notion" > "$RUNNER_TEMP/app.log" 2>&1 &
-          PID=$!
-          for i in $(seq 1 90); do
-            if [ -f "$FN_DATA_DIR/workspace.json" ] && [ "$(ls "$FN_DATA_DIR/pages" 2>/dev/null | wc -l)" -ge 10 ]; then break; fi
-            sleep 1
-          done
-          kill "$PID" 2>/dev/null || true
-          sleep 2
-          pkill -f "Fernando Notion.app" 2>/dev/null || true
-          echo "--- app log ---"; tail -n 30 "$RUNNER_TEMP/app.log" || true
-          echo "--- data folder ---"; ls -la "$FN_DATA_DIR" "$FN_DATA_DIR/pages" | head -40
-          test -f "$FN_DATA_DIR/workspace.json"
-          test "$(ls "$FN_DATA_DIR/pages" | wc -l)" -ge 10
-          echo "Mac app launched and saved its pages."
+
+      # Opens the packaged app and uses it like a person would: writes pages, opens a
+      # project in the side panel, closes and quits it, and checks the files on disk.
+      # If anything fails, the release is not published. (Skipped on Linux, which
+      # would need a virtual screen.)
+      - name: Test the packaged app
+        if: runner.os != 'Linux'
+        timeout-minutes: 10
+        run: node tests/e2e.mjs --packaged
+
+      - name: Keep the test screenshots
+        if: always() && runner.os != 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-screenshots-${{ matrix.os }}
+          path: test-results/
+          if-no-files-found: ignore
 
       - name: Keep installers as a build artifact
         uses: actions/upload-artifact@v4
@@ -79,6 +81,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: out
+          pattern: installers-*
           merge-multiple: true
 
       - name: Create or update the GitHub release

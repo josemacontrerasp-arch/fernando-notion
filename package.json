@@ -17,7 +17,8 @@
     "dist": "vite build && electron-builder --publish never",
     "dist:win": "vite build && electron-builder --win --publish never",
     "dist:mac": "vite build && electron-builder --mac --publish never",
-    "dist:linux": "vite build && electron-builder --linux --publish never"
+    "dist:linux": "vite build && electron-builder --linux --publish never",
+    "test:e2e": "vite build && node tests/e2e.mjs"
   },
   "build": {
     "appId": "com.fernando.notion",
@@ -115,6 +116,7 @@
     "electron-builder": "^26.18.0",
     "emoji-picker-react": "^5.1.4",
     "lucide-react": "^1.70.0",
+    "playwright-core": "^1.65.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "typescript": "^7.0.2",
