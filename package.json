@@ -1,7 +1,7 @@
 {
   "name": "fernando-notion",
   "productName": "Fernando Notion",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A Notion-style workspace for notes, projects, calendars and agendas. Everything auto-saves to your computer.",
   "author": "Fernando Notion",
   "license": "MIT",
@@ -68,7 +68,12 @@
       ],
       "category": "public.app-category.productivity",
       "icon": "build/icon.png",
+      "identity": "-",
+      "hardenedRuntime": false,
       "artifactName": "Fernando-Notion-${version}-mac-${arch}.${ext}"
+    },
+    "dmg": {
+      "title": "Fernando Notion"
     },
     "linux": {
       "target": ["AppImage"],

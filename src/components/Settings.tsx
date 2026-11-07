@@ -4,6 +4,7 @@ import { datedDatabases } from "../lib/agenda";
 import { exportWorkspaceJson, importJsonFiles, importMarkdownFiles } from "../lib/export";
 import { flushEditors, flushNow } from "../lib/persist";
 import { fnApi, isElectron } from "../lib/storage";
+import { KEYS } from "../lib/platform";
 import { isAlive, openPage, replaceWorkspace, toast, updateSettings, useApp } from "../lib/store";
 import { cx, pageTitle } from "../lib/utils";
 
@@ -224,15 +225,16 @@ export function SettingsView() {
         <h2>Keyboard shortcuts</h2>
         <div className="shortcuts">
           {[
-            ["Ctrl+K", "Search"],
-            ["Ctrl+N", "New page"],
-            ["Ctrl+\\", "Toggle sidebar"],
-            ["Ctrl+Shift+L", "Toggle dark mode"],
-            ["Alt+← / Alt+→", "Back / forward"],
+            [KEYS.search, "Search"],
+            [KEYS.newPage, "New page"],
+            [KEYS.sidebar, "Toggle sidebar"],
+            [KEYS.darkMode, "Toggle dark mode"],
+            [KEYS.backForward, "Back / forward"],
+            ...(KEYS.settings ? [[KEYS.settings, "Settings"]] : []),
             ["/", "Insert a block"],
             ["@", "Mention a page or date"],
-            ["Ctrl+B / I / U", "Bold / italic / underline"],
-            ["Ctrl+Z / Ctrl+Shift+Z", "Undo / redo"],
+            [KEYS.format, "Bold / italic / underline"],
+            [KEYS.undo, "Undo / redo"],
             ["Tab / Shift+Tab", "Indent / outdent block"],
           ].map(([k, v]) => (
             <div key={k} className="shortcut">

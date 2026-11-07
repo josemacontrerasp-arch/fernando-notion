@@ -13,24 +13,45 @@ Everything you write is **saved automatically on your computer**, as you type. N
 
 ---
 
-## Download & install (Windows)
+## Download & install
 
-1. Go to the **[Releases page](../../releases/latest)**.
-2. Download **`Fernando-Notion-Setup-1.0.0.exe`** and run it.
-   - Windows may show *“Windows protected your PC”* because the app isn't code-signed.
-     Click **More info → Run anyway**.
-   - Prefer no installation? Download **`Fernando-Notion-Portable-1.0.0.exe`** instead and just double-click it.
-3. Open **Fernando Notion** from the Start menu or the desktop shortcut.
+Everything is on the **[latest release page](../../releases/latest)**.
 
-**Mac / Linux:** when available, the `.dmg` (Mac) and `.AppImage` (Linux) files are on the same Releases page.
-On a Mac, if it says the app “is damaged” or “can't be opened”, right-click the app → **Open**, or run
-`xattr -cr "/Applications/Fernando Notion.app"` in Terminal once. You can always [run it from source](#run-from-source) too.
+### Mac
+
+1. Download the `.dmg` for your Mac:
+   - **Apple chip** (M1, M2, M3, M4…): `Fernando-Notion-…-mac-arm64.dmg`
+   - **Intel chip**: `Fernando-Notion-…-mac-x64.dmg`
+
+   Not sure? Apple menu  → **About This Mac**: “Chip: Apple M…” = Apple chip, “Processor: Intel…” = Intel.
+2. Open the `.dmg` and drag **Fernando Notion** into **Applications**.
+3. **First launch only** — the app isn't from the App Store, so macOS asks you to confirm it:
+   - Open Fernando Notion from Applications. When macOS says it can't verify the app, click **Done**.
+   - Go to **System Settings → Privacy & Security**, scroll down and click **Open Anyway** next to
+     *“Fernando Notion” was blocked*, then confirm with your password.
+   - (macOS 14 or older: right-click the app → **Open** → **Open**.)
+4. If it asks to access your **Documents** folder, click **Allow** — that's where your pages are saved.
+
+From then on it opens normally (Dock, Launchpad, Spotlight). If macOS ever says the app *“is damaged”*, run this once in Terminal and open it again:
+`xattr -cr "/Applications/Fernando Notion.app"`
+
+### Windows
+
+1. Download **`Fernando-Notion-Setup-….exe`** and run it.
+   Windows may show *“Windows protected your PC”* because the app isn't code-signed — click **More info → Run anyway**.
+   (Prefer no installation? Use **`Fernando-Notion-Portable-….exe`** and just double-click it.)
+2. Open **Fernando Notion** from the Start menu or the desktop shortcut.
+
+### Linux
+
+Download the `.AppImage`, make it executable (`chmod +x`) and run it. You can always [run it from source](#run-from-source) too.
 
 ## Where are my pages saved?
 
 - Every page is saved as a small file inside **`Documents/Fernando Notion/`** — automatically, about half a second after you stop typing, and again when you close the window.
 - A **backup of the whole workspace is made every day** in `Documents/Fernando Notion/backups/` (the last 30 are kept). You can restore any of them from **Settings → Your data**.
-- Want your pages on several computers? In **Settings → Your data → Change folder…** pick a folder inside **OneDrive, Dropbox or Google Drive**. (Use one computer at a time.)
+- Want your pages on several computers? In **Settings → Your data → Change folder…** pick a folder inside **iCloud Drive, OneDrive, Dropbox or Google Drive**. (Use one computer at a time.)
+- If the app can't write to its folder (for example because access to Documents was denied on a Mac), it tells you and switches to a safe folder instead of losing anything.
 - **Settings → Export** creates a single `.json` file with everything (images included) that you can keep as an extra backup or import on another computer.
 - Updating the app never touches your pages — just install the new version over the old one.
 
@@ -57,24 +78,23 @@ On a Mac, if it says the app “is damaged” or “can't be opened”, right-cl
 
 **Templates** (one click): Project Tracker, Task List, Calendar & Agenda, Weekly Agenda, Meeting Notes, Daily Journal, Goals, Habit Tracker, Reading List, Quick Notes.
 
-**Everything else**: quick search of all pages and their content (**Ctrl+K**), back/forward navigation, light/dark mode, spell-check.
+**Everything else**: quick search of all pages and their content (**⌘K** / **Ctrl+K**), back/forward navigation, light/dark mode, spell-check.
 
 ## Keyboard shortcuts
 
-| Shortcut | Action |
-| --- | --- |
-| `Ctrl+K` | Search |
-| `Ctrl+N` | New page |
-| `Ctrl+\` | Show/hide sidebar |
-| `Ctrl+Shift+L` | Dark mode |
-| `Alt+←` / `Alt+→` | Back / forward |
-| `/` | Insert a block |
-| `@` | Mention a page or a date |
-| `Ctrl+B` / `Ctrl+I` / `Ctrl+U` | Bold / italic / underline |
-| `Tab` / `Shift+Tab` | Indent / outdent |
-| `Esc` | Close side panel or menu |
-
-(On a Mac use `Cmd` instead of `Ctrl`.)
+| Mac | Windows / Linux | Action |
+| --- | --- | --- |
+| `⌘K` | `Ctrl+K` | Search |
+| `⌘N` | `Ctrl+N` | New page |
+| `⌘\` | `Ctrl+\` | Show/hide sidebar |
+| `⌘⇧L` | `Ctrl+Shift+L` | Dark mode |
+| `⌘[` / `⌘]` | `Alt+←` / `Alt+→` | Back / forward |
+| `⌘,` | — | Settings |
+| `⌘B` / `⌘I` / `⌘U` | `Ctrl+B` / `Ctrl+I` / `Ctrl+U` | Bold / italic / underline |
+| `/` | `/` | Insert a block |
+| `@` | `@` | Mention a page or a date |
+| `Tab` / `⇧Tab` | `Tab` / `Shift+Tab` | Indent / outdent |
+| `Esc` | `Esc` | Close side panel or menu |
 
 ---
 
@@ -97,8 +117,16 @@ npm run dist:mac     # macOS .dmg (run this on a Mac)
 npm run dist:linux   # Linux AppImage
 ```
 
-Publishing a GitHub Release also builds the Windows, macOS and Linux installers automatically
-(see `.github/workflows/build.yml`) and attaches them to the release.
+To publish a new version, bump `version` in `package.json`, then push a tag:
+
+```bash
+git tag v1.0.2
+git push origin v1.0.2
+```
+
+GitHub Actions (`.github/workflows/build.yml`) then builds the Windows, macOS and Linux installers,
+launches the Mac app on a real Mac to check it opens and saves, and publishes everything as a release.
+Mac builds are ad-hoc signed (no paid Apple certificate), which is why macOS asks for “Open Anyway” on first launch.
 
 ## Development
 
@@ -122,9 +150,15 @@ Built with Electron, React, [BlockNote](https://www.blocknotejs.org) (MPL-2.0), 
 
 ### En español — instalación rápida
 
-1. Entra en **[Releases](../../releases/latest)** y descarga **`Fernando-Notion-Setup-1.0.0.exe`**.
-2. Ábrelo. Si Windows dice *“Windows protegió tu PC”*, pulsa **Más información → Ejecutar de todas formas**.
-3. Todo lo que escribes se guarda solo en **Documentos/Fernando Notion** y se hace una copia de seguridad cada día.
+**Mac**
+1. Entra en **[Releases](../../releases/latest)** y descarga el `.dmg`: `mac-arm64` si tu Mac tiene chip Apple (M1, M2, M3, M4…) o `mac-x64` si es Intel.
+2. Abre el `.dmg` y arrastra **Fernando Notion** a **Aplicaciones**.
+3. La primera vez: ábrela, pulsa **OK/Listo** en el aviso, ve a **Ajustes del Sistema → Privacidad y seguridad** y pulsa **Abrir igualmente**.
+4. Si pide acceso a la carpeta **Documentos**, pulsa **Permitir**.
+
+**Windows**: descarga `Fernando-Notion-Setup-….exe` y ábrelo. Si Windows dice *“Windows protegió tu PC”*, pulsa **Más información → Ejecutar de todas formas**.
+
+Todo lo que escribes se guarda solo en **Documentos/Fernando Notion** y se hace una copia de seguridad cada día.
 
 ---
 

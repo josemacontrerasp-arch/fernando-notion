@@ -34,6 +34,7 @@ import {
   useApp,
 } from "../lib/store";
 import { setExpanded, toggleSection, useUi } from "../lib/ui-store";
+import { KEYS } from "../lib/platform";
 import type { ID, Route } from "../lib/types";
 import { cx, pageTitle } from "../lib/utils";
 import { InlineInput, Menu, MenuItem, MenuSep, Popover, usePopover } from "./ui";
@@ -317,7 +318,7 @@ export function Sidebar() {
         <button
           type="button"
           className="icon-btn"
-          title="Close sidebar (Ctrl+\)"
+          title={`Close sidebar (${KEYS.sidebar})`}
           onClick={() => updateSettings({ sidebarCollapsed: true })}
         >
           <ChevronsLeft size={18} />
@@ -325,7 +326,7 @@ export function Sidebar() {
       </div>
 
       <div className="sidebar-nav">
-        <NavItem icon={<Search size={17} />} label="Search" shortcut="Ctrl+K" onClick={() => setQuickFind(true)} />
+        <NavItem icon={<Search size={17} />} label="Search" shortcut={KEYS.search} onClick={() => setQuickFind(true)} />
         <NavItem icon={<House size={17} />} label="Home" route={{ kind: "home" }} />
         <NavItem icon={<CalendarDays size={17} />} label="Calendar" route={{ kind: "calendar" }} />
         <NavItem icon={<LayoutGrid size={17} />} label="Templates" route={{ kind: "templates" }} />

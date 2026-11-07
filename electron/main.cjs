@@ -57,9 +57,13 @@ function saveConfig() {
   }
 }
 
+// Used for the rest of this session when the configured folder can't be written.
+let sessionDataDir = null;
+
 function dataDir() {
   // FN_DATA_DIR lets you run a separate/portable workspace (also used by tests).
   if (process.env.FN_DATA_DIR) return path.resolve(process.env.FN_DATA_DIR);
+  if (sessionDataDir) return sessionDataDir;
   return config.dataDir || path.join(app.getPath("documents"), APP_NAME);
 }
 
@@ -67,6 +71,61 @@ function ensureDataDirs(dir = dataDir()) {
   for (const sub of ["", "pages", "assets", "backups"]) {
     fs.mkdirSync(path.join(dir, sub), { recursive: true });
   }
+}
+
+function isWritable(dir) {
+  try {
+    ensureDataDirs(dir);
+    const probe = path.join(dir, `.write-test-${process.pid}`);
+    fs.writeFileSync(probe, "ok");
+    fs.unlinkSync(probe);
+    return true;
+  } catch (err) {
+    console.error("Data folder is not writable:", dir, err && err.message);
+    return false;
+  }
+}
+
+/**
+ * Makes sure pages can actually be saved. If the folder can't be written
+ * (e.g. macOS access to Documents was denied, or a OneDrive/USB folder is
+ * missing) we switch to a safe folder instead of silently losing edits.
+ * Returns false if the user chose to quit.
+ */
+async function checkDataDir() {
+  if (process.env.FN_DATA_DIR) {
+    ensureDataDirs();
+    return true;
+  }
+  const dir = dataDir();
+  if (isWritable(dir)) return true;
+  const fallback = path.join(app.getPath("userData"), "Workspace");
+  const custom = !!config.dataDir;
+  const macTip = isMac
+    ? "\n\nTo save in Documents instead, allow access in System Settings › Privacy & Security › Files and Folders, then pick the folder again in Settings."
+    : "";
+  // FN_TEST_DIALOG_RESPONSE lets automated tests answer this dialog.
+  const testResponse = process.env.FN_TEST_DIALOG_RESPONSE;
+  const { response } = testResponse != null ? { response: Number(testResponse) } : await dialog.showMessageBox({
+    type: "warning",
+    buttons: custom ? ["Use a safe folder for now", "Quit"] : ["OK"],
+    defaultId: 0,
+    cancelId: custom ? 1 : 0,
+    message: custom ? "Your Fernando Notion folder isn't available." : "Fernando Notion can't save in your Documents folder.",
+    detail: `Couldn't write to:\n${dir}\n\nPages will be saved in:\n${fallback}\n\nYou can choose another folder any time in Settings › Your data.${macTip}`,
+  });
+  if (custom && response === 1) {
+    app.quit();
+    return false;
+  }
+  if (custom) {
+    sessionDataDir = fallback; // try the user's folder again next time
+  } else {
+    config.dataDir = fallback;
+    saveConfig();
+  }
+  ensureDataDirs(fallback);
+  return true;
 }
 
 // ------------------------------------------------------------- file utils ---
@@ -249,6 +308,7 @@ function registerIpc() {
       if (fs.existsSync(metaFile)) fs.copyFileSync(metaFile, path.join(target, "workspace.json"));
     }
     config.dataDir = target;
+    sessionDataDir = null;
     saveConfig();
     return target;
   });
@@ -436,7 +496,26 @@ function createWindow() {
 function buildMenu() {
   const send = (action) => mainWindow && mainWindow.webContents.send("menu", action);
   const template = [
-    ...(isMac ? [{ role: "appMenu" }] : []),
+    ...(isMac
+      ? [
+          {
+            label: APP_NAME,
+            submenu: [
+              { role: "about" },
+              { type: "separator" },
+              { label: "Settings…", accelerator: "Cmd+,", click: () => send("settings") },
+              { type: "separator" },
+              { role: "services" },
+              { type: "separator" },
+              { role: "hide" },
+              { role: "hideOthers" },
+              { role: "unhide" },
+              { type: "separator" },
+              { role: "quit" },
+            ],
+          },
+        ]
+      : []),
     {
       label: "File",
       submenu: [
@@ -444,7 +523,7 @@ function buildMenu() {
         { label: "Search…", click: () => send("search") },
         { type: "separator" },
         { label: "Open Data Folder", click: () => shell.openPath(dataDir()) },
-        { label: "Settings", click: () => send("settings") },
+        ...(isMac ? [] : [{ label: "Settings", click: () => send("settings") }]),
         { type: "separator" },
         isMac ? { role: "close" } : { role: "quit" },
       ],
@@ -488,9 +567,9 @@ if (!gotLock) {
     }
   });
 
-  app.whenReady().then(() => {
+  app.whenReady().then(async () => {
     loadConfig();
-    ensureDataDirs();
+    if (!(await checkDataDir())) return;
     dailyBackup();
 
     protocol.handle("fnasset", (request) => {

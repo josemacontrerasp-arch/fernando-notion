@@ -3,6 +3,7 @@ const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("fnApi", {
   isElectron: true,
+  platform: process.platform,
   load: () => ipcRenderer.invoke("ws:load"),
   save: (payload) => ipcRenderer.invoke("ws:save", payload),
   saveSync: (payload) => ipcRenderer.sendSync("ws:saveSync", payload),

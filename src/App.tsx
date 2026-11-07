@@ -24,6 +24,7 @@ import { TopBar } from "./components/TopBar";
 import { TrashView } from "./components/Trash";
 import { useResolvedTheme } from "./components/ui";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { isMac } from "./lib/platform";
 import { cx } from "./lib/utils";
 
 function Toasts() {
@@ -90,8 +91,16 @@ function Main() {
 function useShortcuts() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const mod = e.ctrlKey || e.metaKey;
+      // Let the editor keep its own shortcuts (e.g. Ctrl/⌘+K to add a link on selected text).
+      if (e.defaultPrevented) return;
+      const mod = isMac ? e.metaKey : e.ctrlKey;
       const k = e.key.toLowerCase();
+      if (isMac && e.metaKey && !e.shiftKey && (e.key === "[" || e.key === "]")) {
+        e.preventDefault();
+        if (e.key === "[") goBack();
+        else goForward();
+        return;
+      }
       if (mod && (k === "k" || k === "p") && !e.shiftKey) {
         e.preventDefault();
         setQuickFind(!useApp.getState().quickFind);
@@ -105,10 +114,11 @@ function useShortcuts() {
         e.preventDefault();
         const dark = document.documentElement.dataset.theme === "dark";
         updateSettings({ theme: dark ? "light" : "dark" });
-      } else if (e.altKey && e.key === "ArrowLeft") {
+      } else if (!isMac && e.altKey && e.key === "ArrowLeft") {
+        // (On a Mac, Option+arrows move by word while typing, so ⌘[ / ⌘] are used instead.)
         e.preventDefault();
         goBack();
-      } else if (e.altKey && e.key === "ArrowRight") {
+      } else if (!isMac && e.altKey && e.key === "ArrowRight") {
         e.preventDefault();
         goForward();
       }

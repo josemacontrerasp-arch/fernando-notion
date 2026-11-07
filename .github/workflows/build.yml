@@ -1,10 +1,11 @@
 name: Build installers
 
-# Runs when a GitHub Release is published (or manually from the Actions tab)
-# and attaches Windows, macOS and Linux installers to that release.
+# Push a version tag (e.g. `git tag v1.0.2 && git push origin v1.0.2`) to build
+# Windows, macOS and Linux installers, smoke-test the Mac app, and publish them
+# as a GitHub Release. "Run workflow" in the Actions tab builds without publishing.
 on:
-  release:
-    types: [published]
+  push:
+    tags: ["v*"]
   workflow_dispatch:
 
 permissions:
@@ -33,17 +34,30 @@ jobs:
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
 
-      - name: Attach installers to the release
-        if: github.event_name == 'release'
+      - name: Smoke-test the Mac app (signature, launch, saving)
+        if: runner.os == 'macOS'
         shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          shopt -s nullglob
-          files=(release/*.exe release/*.dmg release/*.AppImage)
-          if [ ${#files[@]} -gt 0 ]; then
-            gh release upload "${{ github.event.release.tag_name }}" "${files[@]}" --clobber
-          fi
+          set -euo pipefail
+          APP="$(ls -d release/mac-arm64/*.app | head -1)"
+          echo "Testing: $APP"
+          codesign --verify --deep --strict --verbose=2 "$APP"
+          codesign -dv "$APP" 2>&1 | grep -E "Identifier|Signature|Format" || true
+          export FN_DATA_DIR="$RUNNER_TEMP/fn-data" FN_USER_DATA="$RUNNER_TEMP/fn-user"
+          "$APP/Contents/MacOS/Fernando Notion" > "$RUNNER_TEMP/app.log" 2>&1 &
+          PID=$!
+          for i in $(seq 1 90); do
+            if [ -f "$FN_DATA_DIR/workspace.json" ] && [ "$(ls "$FN_DATA_DIR/pages" 2>/dev/null | wc -l)" -ge 10 ]; then break; fi
+            sleep 1
+          done
+          kill "$PID" 2>/dev/null || true
+          sleep 2
+          pkill -f "Fernando Notion.app" 2>/dev/null || true
+          echo "--- app log ---"; tail -n 30 "$RUNNER_TEMP/app.log" || true
+          echo "--- data folder ---"; ls -la "$FN_DATA_DIR" "$FN_DATA_DIR/pages" | head -40
+          test -f "$FN_DATA_DIR/workspace.json"
+          test "$(ls "$FN_DATA_DIR/pages" | wc -l)" -ge 10
+          echo "Mac app launched and saved its pages."
 
       - name: Keep installers as a build artifact
         uses: actions/upload-artifact@v4
@@ -53,4 +67,28 @@ jobs:
             release/*.exe
             release/*.dmg
             release/*.AppImage
-          if-no-files-found: ignore
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+          merge-multiple: true
+
+      - name: Create or update the GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          ls -la out
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" out/* --clobber
+          else
+            gh release create "$TAG" out/* --title "Fernando Notion ${TAG#v}" --notes-file .github/release-notes.md
+          fi

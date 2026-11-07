@@ -6,6 +6,7 @@ import type { Color, DatabaseSchema, DatabaseView, ID, PropertyDef, PropertyType
 import { newProperty, newView } from "./db";
 import { addRow, createPage, navigate, updateSettings, useApp } from "./store";
 import { bullet, callout, divider, h, p, quote, rich, todo, toggle, uid } from "./utils";
+import { isMac, KEYS } from "./platform";
 
 // ----------------------------------------------------------- helpers ----
 
@@ -416,19 +417,21 @@ export function seedWorkspace() {
       todo("Type “@” to mention another page or a date"),
       todo("Drag the ⋮⋮ handle on the left of a block to move it"),
       todo("Open Projects, Tasks and Calendar in the sidebar — they are full databases"),
-      todo("Press Ctrl+K to search everything"),
+      todo(`Press ${KEYS.search} to search everything`),
       h(2, "Your workspace"),
       { type: "pageLink", props: { pageId: projects } },
       { type: "pageLink", props: { pageId: tasks } },
       { type: "pageLink", props: { pageId: calendar } },
       h(2, "Good to know"),
       toggle("Where are my pages saved?", [
-        p("In the desktop app, every page is a file inside Documents › Fernando Notion. A backup copy of the whole workspace is made every day in the backups folder. You can change the folder (for example to OneDrive or Dropbox) in Settings."),
+        p(
+          `In the desktop app, every page is a file inside Documents › Fernando Notion. A backup copy of the whole workspace is made every day in the backups folder. You can change the folder (for example to ${isMac ? "iCloud Drive, Dropbox or OneDrive" : "OneDrive or Dropbox"}) in Settings.`,
+        ),
       ]),
       toggle("Keyboard shortcuts", [
-        rich([{ text: "Ctrl+K", code: true }, "  search  ·  ", { text: "Ctrl+N", code: true }, "  new page  ·  ", { text: "Ctrl+\\", code: true }, "  toggle sidebar"]),
-        rich([{ text: "Ctrl+B / I / U", code: true }, "  bold, italic, underline  ·  ", { text: "Ctrl+Z", code: true }, "  undo"]),
-        rich([{ text: "Alt+←  /  Alt+→", code: true }, "  back / forward  ·  ", { text: "Ctrl+Shift+L", code: true }, "  dark mode"]),
+        rich([{ text: KEYS.search, code: true }, "  search  ·  ", { text: KEYS.newPage, code: true }, "  new page  ·  ", { text: KEYS.sidebar, code: true }, "  toggle sidebar"]),
+        rich([{ text: KEYS.format, code: true }, "  bold, italic, underline  ·  ", { text: KEYS.undo, code: true }, "  undo / redo"]),
+        rich([{ text: KEYS.backForward, code: true }, "  back / forward  ·  ", { text: KEYS.darkMode, code: true }, "  dark mode"]),
         rich(["Markdown works too: ", { text: "# ", code: true }, " heading, ", { text: "- ", code: true }, " bullet, ", { text: "[] ", code: true }, " to-do, ", { text: "> ", code: true }, " toggle, ", { text: "```", code: true }, " code."]),
       ]),
       toggle("Templates", [p("Open Templates in the sidebar to add a Weekly Agenda, Meeting Notes, Journal, Goals, Habit Tracker or Reading List in one click.")]),

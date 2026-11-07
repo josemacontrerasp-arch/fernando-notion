@@ -36,6 +36,7 @@ import {
 } from "../lib/store";
 import type { ID } from "../lib/types";
 import { cx, pageTitle, wordCount } from "../lib/utils";
+import { KEYS } from "../lib/platform";
 import { PagePicker } from "./PagePicker";
 import { PageIcon } from "./Sidebar";
 import { Menu, MenuItem, MenuSep, Popover, Toggle, usePopover } from "./ui";
@@ -247,14 +248,14 @@ export function TopBar() {
   return (
     <header className="topbar">
       {collapsed && (
-        <button type="button" className="icon-btn" title="Open sidebar (Ctrl+\)" onClick={() => updateSettings({ sidebarCollapsed: false })}>
+        <button type="button" className="icon-btn" title={`Open sidebar (${KEYS.sidebar})`} onClick={() => updateSettings({ sidebarCollapsed: false })}>
           <MenuIcon size={18} />
         </button>
       )}
-      <button type="button" className="icon-btn" disabled={!canBack} title="Back (Alt+←)" onClick={goBack}>
+      <button type="button" className="icon-btn" disabled={!canBack} title={`Back (${KEYS.back})`} onClick={goBack}>
         <ArrowLeft size={17} />
       </button>
-      <button type="button" className="icon-btn" disabled={!canFwd} title="Forward (Alt+→)" onClick={goForward}>
+      <button type="button" className="icon-btn" disabled={!canFwd} title={`Forward (${KEYS.forward})`} onClick={goForward}>
         <ArrowRight size={17} />
       </button>
       {pageId ? <Breadcrumbs pageId={pageId} /> : <div className="crumbs"><span className="crumb static">{ROUTE_TITLES[route.kind]}</span></div>}
